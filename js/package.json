@@ -1,7 +1,7 @@
 {
-  "name": "ehbp",
-  "version": "0.0.4",
-  "description": "JavaScript client for Encrypted HTTP Body Protocol (EHBP)",
+  "name": "@zeke-02/ehbp",
+  "version": "0.0.1",
+  "description": "JavaScript client for Encrypted HTTP Body Protocol (EHBP) that works with Tauri",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
@@ -39,7 +39,8 @@
   "license": "MIT",
   "dependencies": {
     "@hpke/core": "^1.7.4",
-    "@hpke/dhkem-x25519": "^1.6.4"
+    "@hpke/dhkem-x25519": "^1.6.4",
+    "@tauri-apps/plugin-http": "^2.5.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

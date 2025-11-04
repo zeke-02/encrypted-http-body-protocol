@@ -1,5 +1,6 @@
-import { Identity } from './identity.js';
-import { PROTOCOL } from './protocol.js';
+import { Identity } from "./identity.js";
+import { PROTOCOL } from "./protocol.js";
+import { fetch } from "@tauri-apps/plugin-http";
 
 /**
  * HTTP transport for EHBP
@@ -9,7 +10,11 @@ export class Transport {
   private serverHost: string;
   private serverPublicKey: CryptoKey;
 
-  constructor(clientIdentity: Identity, serverHost: string, serverPublicKey: CryptoKey) {
+  constructor(
+    clientIdentity: Identity,
+    serverHost: string,
+    serverPublicKey: CryptoKey
+  ) {
     this.clientIdentity = clientIdentity;
     this.serverHost = serverHost;
     this.serverPublicKey = serverPublicKey;
@@ -18,7 +23,10 @@ export class Transport {
   /**
    * Create a new transport by fetching server public key
    */
-  static async create(serverURL: string, clientIdentity: Identity): Promise<Transport> {
+  static async create(
+    serverURL: string,
+    clientIdentity: Identity
+  ): Promise<Transport> {
     const url = new URL(serverURL);
     const serverHost = url.host;
 
@@ -30,7 +38,7 @@ export class Transport {
       throw new Error(`Failed to get server public key: ${response.status}`);
     }
 
-    const contentType = response.headers.get('content-type');
+    const contentType = response.headers.get("content-type");
     if (contentType !== PROTOCOL.KEYS_MEDIA_TYPE) {
       throw new Error(`Invalid content type: ${contentType}`);
     }
@@ -53,11 +61,11 @@ export class Transport {
    * Get the server public key as hex string
    */
   async getServerPublicKeyHex(): Promise<string> {
-    const exported = await crypto.subtle.exportKey('raw', this.serverPublicKey);
+    const exported = await crypto.subtle.exportKey("raw", this.serverPublicKey);
     const keyBytes = new Uint8Array(exported);
     return Array.from(keyBytes)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   /**
@@ -70,10 +78,13 @@ export class Transport {
   /**
    * Make an encrypted HTTP request
    */
-  async request(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  async request(
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ): Promise<Response> {
     // Extract body from init or original request before creating Request object
     let requestBody: BodyInit | null = null;
-    
+
     if (input instanceof Request) {
       // If input is a Request, extract its body
       if (input.body) {
@@ -95,30 +106,36 @@ export class Transport {
       headers = input.headers;
     } else {
       url = new URL(input);
-      method = init?.method || 'GET';
+      method = init?.method || "GET";
       headers = init?.headers || {};
     }
 
     url.host = this.serverHost;
-    
+
     let request = new Request(url.toString(), {
       method,
       headers,
       body: requestBody,
-      duplex: 'half'
+      duplex: "half",
     } as RequestInit);
 
     // Encrypt request body if present (check the original requestBody, not request.body)
     if (requestBody !== null && requestBody !== undefined) {
-      request = await this.clientIdentity.encryptRequest(request, this.serverPublicKey);
+      request = await this.clientIdentity.encryptRequest(
+        request,
+        this.serverPublicKey
+      );
     } else {
       // No body, just set client public key header
       const headers = new Headers(request.headers);
-      headers.set(PROTOCOL.CLIENT_PUBLIC_KEY_HEADER, await this.clientIdentity.getPublicKeyHex());
+      headers.set(
+        PROTOCOL.CLIENT_PUBLIC_KEY_HEADER,
+        await this.clientIdentity.getPublicKeyHex()
+      );
       request = new Request(request.url, {
         method: request.method,
         headers,
-        body: null
+        body: null,
       });
     }
 
@@ -130,14 +147,18 @@ export class Transport {
     }
 
     // Check for encapsulated key header
-    const encapKeyHeader = response.headers.get(PROTOCOL.ENCAPSULATED_KEY_HEADER);
+    const encapKeyHeader = response.headers.get(
+      PROTOCOL.ENCAPSULATED_KEY_HEADER
+    );
     if (!encapKeyHeader) {
-      throw new Error(`Missing ${PROTOCOL.ENCAPSULATED_KEY_HEADER} encapsulated key header`);
+      throw new Error(
+        `Missing ${PROTOCOL.ENCAPSULATED_KEY_HEADER} encapsulated key header`
+      );
     }
 
     // Decode encapsulated key
     const serverEncapKey = new Uint8Array(
-      encapKeyHeader.match(/.{2}/g)!.map(byte => parseInt(byte, 16))
+      encapKeyHeader.match(/.{2}/g)!.map((byte) => parseInt(byte, 16))
     );
 
     // Decrypt response
@@ -148,34 +169,45 @@ export class Transport {
    * Convenience method for GET requests
    */
   async get(url: string | URL, init?: RequestInit): Promise<Response> {
-    return this.request(url, { ...init, method: 'GET' });
+    return this.request(url, { ...init, method: "GET" });
   }
 
   /**
    * Convenience method for POST requests
    */
-  async post(url: string | URL, body?: BodyInit, init?: RequestInit): Promise<Response> {
-    return this.request(url, { ...init, method: 'POST', body });
+  async post(
+    url: string | URL,
+    body?: BodyInit,
+    init?: RequestInit
+  ): Promise<Response> {
+    return this.request(url, { ...init, method: "POST", body });
   }
 
   /**
    * Convenience method for PUT requests
    */
-  async put(url: string | URL, body?: BodyInit, init?: RequestInit): Promise<Response> {
-    return this.request(url, { ...init, method: 'PUT', body });
+  async put(
+    url: string | URL,
+    body?: BodyInit,
+    init?: RequestInit
+  ): Promise<Response> {
+    return this.request(url, { ...init, method: "PUT", body });
   }
 
   /**
    * Convenience method for DELETE requests
    */
   async delete(url: string | URL, init?: RequestInit): Promise<Response> {
-    return this.request(url, { ...init, method: 'DELETE' });
+    return this.request(url, { ...init, method: "DELETE" });
   }
 }
 
 /**
  * Create a new transport instance
  */
-export async function createTransport(serverURL: string, clientIdentity: Identity): Promise<Transport> {
+export async function createTransport(
+  serverURL: string,
+  clientIdentity: Identity
+): Promise<Transport> {
   return Transport.create(serverURL, clientIdentity);
 }
