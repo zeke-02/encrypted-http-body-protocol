@@ -1,6 +1,5 @@
 import { Identity } from "./identity.js";
 import { PROTOCOL } from "./protocol.js";
-import { fetch } from "@tauri-apps/plugin-http";
 
 /**
  * HTTP transport for EHBP
