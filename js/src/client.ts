@@ -1,5 +1,6 @@
 import { Identity } from "./identity.js";
 import { PROTOCOL } from "./protocol.js";
+import { fetch } from "@tauri-apps/plugin-http";
 
 /**
  * HTTP transport for EHBP
@@ -143,7 +144,12 @@ export class Transport {
         body: null,
       });
     }
-
+    console.log('ehbp input', input)
+    console.log("ehbp request", request)
+    console.log("ehbp request headers:")
+    request.headers.forEach((value, key) => {
+      console.log(`ehbp request header:  ${key}: ${value}`)
+    })
     // Make the request
     const response = await fetch(request);
 
