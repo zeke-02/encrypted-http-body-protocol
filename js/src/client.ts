@@ -144,12 +144,7 @@ export class Transport {
         body: null,
       });
     }
-    console.log('ehbp input', input)
-    console.log("ehbp request", request)
-    console.log("ehbp request headers:")
-    request.headers.forEach((value, key) => {
-      console.log(`ehbp request header:  ${key}: ${value}`)
-    })
+
     // Make the request
     const response = await fetch(request);
 
